@@ -9,13 +9,6 @@ let OrdersSummarySchema = new Schema({
         ref: "User",
     },
 
-    status: {
-        type: String
-    },
-    statusCode: {
-        type: Number
-    },
-
     deliveryType: {
         type: String
     },

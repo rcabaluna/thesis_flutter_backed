@@ -36,6 +36,10 @@ let OrderSchema = new Schema({
     type: Number,
   },
 
+  status: {
+    type: String,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,

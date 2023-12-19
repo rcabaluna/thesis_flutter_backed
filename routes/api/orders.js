@@ -20,8 +20,6 @@ router.post("/", isAuthorized, async (req, res, next) => {
             deliveryType: body.summary.deliveryType,
             address: body.summary.address,
             notes: body.summary.notes,
-            status: 'Pending',
-            statusCode: 0
         });
 
         const summaryOrderId = createdOrderSummary._id;
@@ -66,15 +64,18 @@ router.get("/", async (req, res, next) => {
 
 });
 
-router.get("/order-details/:id", async (req, res, next) => {
+router.get("/order-details/:id", isAuthorized, async (req, res, next) => {
     const orderId = req.params.id;
     const objOrderId = new ObjectId(orderId);
+    const userId = token._id; // Assuming you have the userId from the token
 
     try {
-
         // Find order details based on orderId and sellerId (token)
         const result = await Order.find({
             orderId: objOrderId,
+            sellerId: {
+                $elemMatch: { $eq: userId } // Matches userId inside sellerId array
+            }
         })
             .populate('userId', 'email phoneNumber address imageUrl')
             .populate('sellerId', 'shopName address email phoneNumber')
@@ -85,24 +86,109 @@ router.get("/order-details/:id", async (req, res, next) => {
     } catch (e) {
         next(e);
     }
-
 });
 
-router.put("/accept-order/:orderid", async (req, res, next) => {
-    const orderId = req.params.orderid;
-    try {
-        const result = await OrdersSummary.findByIdAndUpdate(
-            orderId,
-            { $set: { status: "Accepted" } },
-            { new: true }
-        );
+router.put("/accept-order/:orderId", isAuthorized, async (req, res, next) => {
 
-        return res.json(result);
+    const { body, token } = req;
+    const orderId = req.params.orderId;
+
+    const objsellerId = new ObjectId(token._id);
+
+    try {
+
+        const order = await Order.find
+            ({ orderId });
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const userIdFromToken = token._id;
+
+        if (order.sellerId.toString() === userIdFromToken.toString()) {
+            order.status = 'Accepted';
+            order.updatedAt = new Date();
+
+            // Save the updated order
+            await order.save();
+            return res.status(200).json({ message: 'Order status updated successfully' });
+        } else {
+            return res.status(403).json({ error: 'Unauthorized to update this order' });
+        }
     } catch (err) {
-        print(err);
-        return [];
+        console.error(err);
+        return res.status(500).json({ error: 'Server error' });
     }
 
 });
+
+
+
+// MY ORDERS
+router.get("/my-orders", isAuthorized, async (req, res, next) => {
+    const { token } = req;
+    const objectUserID = new ObjectId(token._id);
+    try {
+        const orders = await OrdersSummary.find({ userId: objectUserID });
+        res.json(orders);
+    } catch (e) {
+        next(e);
+    }
+});
+
+router.get("/get-order-summary/:orderid", isAuthorized, async (req, res, next) => {
+    const { token } = req;
+    const orderId = req.params.orderId;
+    const objectUserID = new ObjectId(token._id);
+    const objectOrderID = new ObjectId(orderId);
+
+    try {
+        const orders = await OrdersSummary.find({ userId: objectUserID, _id: objectOrderID }).populate('userId');
+        res.json(orders);
+    } catch (e) {
+        next(e);
+    }
+});
+
+
+
+
+router.put("/receive-order/:orderId", isAuthorized, async (req, res, next) => {
+
+    const { body, token } = req;
+    const orderId = req.params.orderId;
+
+    const objsellerId = new ObjectId(token._id);
+
+    try {
+
+        const order = await Order.findOne
+            ({ orderId });
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const userIdFromToken = token._id;
+
+        if (order.userId.toString() == userIdFromToken.toString()) {
+            order.status = 'Received';
+            order.updatedAt = new Date();
+
+            await order.save();
+            return res.status(200).json({ message: 'Order status updated successfully' });
+        } else {
+            return res.status(403).json({ error: 'Unauthorized to update this order' });
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Server error' });
+    }
+
+});
+
+
+
 
 module.exports = router;
