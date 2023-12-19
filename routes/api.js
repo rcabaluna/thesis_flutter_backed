@@ -1,0 +1,15 @@
+const express = require("express");
+const router = express.Router();
+const users = require("./api/users");
+const category = require("./api/category");
+const product = require("./api/product");
+const auth = require("./api/auth");
+const shop = require("./api/shop");
+const order = require("./api/orders");
+router.use("/users", users);
+router.use("/category", category);
+router.use("/product", product);
+router.use("/auth", auth);
+router.use("/shop", shop);
+router.use("/orders", order);
+module.exports = router;
