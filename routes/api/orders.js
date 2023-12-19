@@ -67,18 +67,15 @@ router.get("/", async (req, res, next) => {
 router.get("/order-details/:id", isAuthorized, async (req, res, next) => {
     const orderId = req.params.id;
     const objOrderId = new ObjectId(orderId);
-    const userId = token._id; // Assuming you have the userId from the token
 
     try {
-        // Find order details based on orderId and sellerId (token)
+        // Find order details based on orderId and sellerId (userId)
         const result = await Order.find({
             orderId: objOrderId,
-            sellerId: {
-                $elemMatch: { $eq: userId } // Matches userId inside sellerId array
-            }
+
         })
             .populate('userId', 'email phoneNumber address imageUrl')
-            .populate('sellerId', 'shopName address email phoneNumber')
+            .populate('sellerId', 'shopName imageUrl address email phoneNumber')
             .populate('productBySellerId', 'price productId')
             .exec();
         res.json(result);
@@ -87,6 +84,7 @@ router.get("/order-details/:id", isAuthorized, async (req, res, next) => {
         next(e);
     }
 });
+
 
 router.put("/accept-order/:orderId", isAuthorized, async (req, res, next) => {
 
