@@ -151,7 +151,7 @@ router.get("/product-sold", isAuthorized, async (req, res, next) => {
 router.get("/my-shop-orders", isAuthorized, async (req, res, next) => {
   const { token } = req;
   try {
-    const orders = await OrdersSummary.find({}).populate("userId");;
+    const orders = await OrdersSummary.find({}).populate("userId");
 
     res.json(orders);
   } catch (e) {

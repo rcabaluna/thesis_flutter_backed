@@ -14,9 +14,10 @@ const router = express.Router();
 router.post("/", isAuthorized, async (req, res, next) => {
     const { body, token } = req;
     try {
+
         const createdOrderSummary = await OrdersSummary.create({
             userId: token._id,
-            deliveryType: body.summary.deliverytype,
+            deliveryType: body.summary.deliveryType,
             address: body.summary.address,
             notes: body.summary.notes,
             status: 'Pending',
@@ -40,6 +41,7 @@ router.post("/", isAuthorized, async (req, res, next) => {
                 quantity: order.quantity,
                 userId: token._id,
                 total: productBySeller.price * order.quantity,
+                status: 'Pending'
             });
             newOrder.push(orderModel);
         }
@@ -83,6 +85,24 @@ router.get("/order-details/:id", async (req, res, next) => {
     } catch (e) {
         next(e);
     }
+
+});
+
+router.put("/accept-order/:orderid", async (req, res, next) => {
+    const orderId = req.params.orderid;
+    try {
+        const result = await OrdersSummary.findByIdAndUpdate(
+            orderId,
+            { $set: { status: "Accepted" } },
+            { new: true }
+        );
+
+        return res.json(result);
+    } catch (err) {
+        print(err);
+        return [];
+    }
+
 });
 
 module.exports = router;
