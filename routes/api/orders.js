@@ -137,19 +137,17 @@ router.get("/my-orders", isAuthorized, async (req, res, next) => {
 
 router.get("/get-order-summary/:orderid", isAuthorized, async (req, res, next) => {
     const { token } = req;
-    const orderId = req.params.orderId;
-    const objectUserID = new ObjectId(token._id);
+    const orderId = req.params.orderid;
+    const objectUserID = token._id;
     const objectOrderID = new ObjectId(orderId);
 
     try {
-        const orders = await OrdersSummary.find({ userId: objectUserID, _id: objectOrderID }).populate('userId');
+        const orders = await OrdersSummary.find({ _id: objectOrderID, userId: token._id }).populate('userId');
         res.json(orders);
     } catch (e) {
         next(e);
     }
 });
-
-
 
 
 router.put("/receive-order/:orderId", isAuthorized, async (req, res, next) => {
@@ -185,8 +183,5 @@ router.put("/receive-order/:orderId", isAuthorized, async (req, res, next) => {
     }
 
 });
-
-
-
 
 module.exports = router;
